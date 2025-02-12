@@ -35,7 +35,7 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(atividade_adc_embarcatech src/main.c )
+add_executable(atividade_adc_embarcatech src/main.c src/ssd1306.c)
 
 pico_set_program_name(atividade_adc_embarcatech "atividade_adc_embarcatech")
 pico_set_program_version(atividade_adc_embarcatech "0.1")
@@ -58,6 +58,7 @@ target_link_libraries(atividade_adc_embarcatech
         hardware_pwm
         hardware_adc
         hardware_irq
+        hardware_i2c
         )
 
 pico_add_extra_outputs(atividade_adc_embarcatech)
