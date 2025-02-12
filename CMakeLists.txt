@@ -55,7 +55,9 @@ target_include_directories(atividade_adc_embarcatech PRIVATE
 
 # Add any user requested libraries
 target_link_libraries(atividade_adc_embarcatech 
-        
+        hardware_pwm
+        hardware_adc
+        hardware_irq
         )
 
 pico_add_extra_outputs(atividade_adc_embarcatech)
