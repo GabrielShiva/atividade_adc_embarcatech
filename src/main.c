@@ -219,6 +219,30 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
     } 
 }
 
+// calcula a nova posição do quadrado de acordo com as coordenadas fornecidas pelo joystick
+void move_square(uint16_t x_value, uint16_t y_value) {
+    // calcula a distância do centro
+    int16_t x_diff = x_value - central_x_pos;
+    int16_t y_diff = central_y_pos - y_value;
+
+    // normaliza a distância do centro para a faixa [-1, 1]
+    float max_displacement_x = 2049.0f;
+    float max_displacement_y = 2107.0f;
+    float normalized_x = (float)x_diff / max_displacement_x;
+    float normalized_y = (float)y_diff / max_displacement_y;
+
+    // calcula a nova posição do quadrado que está centrado inicialmente em (60, 28)
+    int new_x = 60 + (int)(normalized_x * 60.0f);
+    int new_y = 28 + (int)(normalized_y * 28.0f);
+
+    // limita as posições para o tamnho da tela
+    new_x = (new_x < 0) ? 0 : (new_x > 120) ? 120 : new_x;
+    new_y = (new_y < 0) ? 0 : (new_y > 56) ? 56 : new_y;
+
+    // cria o quadrado 8X8
+    ssd1306_rect(&ssd, new_y, new_x, 8, 8, true, true);
+}
+
 int main() {
     // chama função para comunicação serial via usb para debug
     stdio_init_all(); 
@@ -263,29 +287,12 @@ int main() {
 
         // realiza leitura para o eixo y
         uint16_t y_value = adc_start_read(0);
+
         // converte o valor para controle da intensidade do led azul tomado como menor intensidade a posição central
         uint16_t y_value_converted = adc_convert_value(central_y_pos, y_value);
 
-        // calcula a distância do centro
-        int16_t x_diff = x_value - central_x_pos;
-        int16_t y_diff = central_y_pos - y_value;
-
-        // normaliza a distância do centro para a faixa [-1, 1]
-        float max_displacement_x = 2049.0f;
-        float max_displacement_y = 2107.0f;
-        float normalized_x = (float)x_diff / max_displacement_x;
-        float normalized_y = (float)y_diff / max_displacement_y;
-
-        // calcula a nova posição do quadrado que está centrado inicialmente em (60, 28)
-        int new_x = 60 + (int)(normalized_x * 60.0f);
-        int new_y = 28 + (int)(normalized_y * 28.0f);
-
-        // limita as posições para o tamnho da tela
-        new_x = (new_x < 0) ? 0 : (new_x > 120) ? 120 : new_x;
-        new_y = (new_y < 0) ? 0 : (new_y > 56) ? 56 : new_y;
-
-        // cria o quadrado 8X8
-        ssd1306_rect(&ssd, new_y, new_x, 8, 8, true, true);
+        // chama a função que calcula a nova posição do quadrado de acordo com as coordenadas do joystick
+        move_square(x_value, y_value);
 
         // atualiza o display OLED
         ssd1306_send_data(&ssd);
@@ -300,7 +307,10 @@ int main() {
         // ativa/desativa pwm com base no botão A
         pwm_set_enabled(y_slice_num, leds_pwm_state);
 
+        // imprime no monitor serial a intensidade dos leds
         printf("\n LED VERMELHO (X): %.2f%%, LED AZUL (Y): %.2f%%\n", x_value_converted/4095.0*100, y_value_converted/4095.0*100);
-        sleep_ms(50);
+
+        // adiciona um atraso de 50ms para criar tempo para vizualização dos dados no monitor serial
+        sleep_ms(60);
     }
 }
